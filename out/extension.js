@@ -64,6 +64,7 @@ function activate(context) {
             };
             const result = yield request.get(options);
             console.log(result);
+            panel.webview.postMessage({ command: 'loadCodeExamples', codeExamples: result });
         });
         let highlightTimeout;
         // consider looking at mouse up events:
@@ -93,6 +94,8 @@ function activate(context) {
                     );*/
                     //vscode.window.showErrorMessage(fullRange);
                     return;
+                case 'searchCode':
+                    sendCode(message.search);
             }
         });
         // onDidChangeActiveTerminal
@@ -174,21 +177,67 @@ function activate(context) {
         margin-top: 40px;
         margin-bottom: 40px;
       }
+      textarea:focus, input:focus{
+        outline: none;
+      }
+      #searchCode{
+        position: relative;
+        width: 90%;
+        border: 1px solid white;
+        padding: 5px;
+        margin: 20px;
+      }
       </style>
       <body>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
         <button id="testbtn">stuff</button>
-        <div id="codeCon">
-        </div>
+        <div id="windowBody">
+          <input id="searchCode" placeholder="Search for code"/>
+          <div id="codeCon">
+          </div>
         <script>
         const vscode = acquireVsCodeApi();
-        console.log("hi");
+        let searchCode = document.getElementById("searchCode")
+        searchCode.addEventListener("keyup", function(e){
+          if(e.keyCode==13){
+            console.log(searchCode.value)
+            vscode.postMessage({
+              command: 'searchCode',
+              search: 'searchCode.value'
+            });
+          }
+        });
 
         document.getElementById('testbtn').onclick = function(){
           console.log("pressed");
           vscode.postMessage({
             command: 'alert',
             text: '🐛  on line '
+          });
+        };
+
+        window.addEventListener('message', event => {
+
+          const message = event.data; // The JSON data our extension sent
+
+          switch (message.command) {
+            case 'loadCodeExamples':
+              console.log("asd");
+              createCodeExamples(message.codeExamples);
+              break;
+          }
+        });
+
+        let createCodeExamples = (codeExamples) => {
+          let codeCon = document.getElementById("codeCon");
+          codeCon.innerHTML = "";
+          codeExamples.forEach(function(codeExample) {
+            console.log(codeExample);
+            createCodeExample(codeExample);
+          });
+
+          document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
           });
         };
 
@@ -201,9 +250,9 @@ function activate(context) {
 
           var codeExampleLink = document.createElement("a");
           codeExampleLink.classList.add("codeExampleLink");
-          //codeExampleLink.setAttribute('href', codeExampleData.link);
-          codeExampleLink.href = codeExampleData.link;
-          codeExampleLink.innerText = codeExampleData.link;
+          //codeExampleLink.setAttribute('href', codeExampleData.url);
+          codeExampleLink.href = codeExampleData.url;
+          codeExampleLink.innerText = codeExampleData.url;
           codeExampleCon.appendChild(codeExampleLink);
 
           var pre = document.createElement("pre");
@@ -211,7 +260,11 @@ function activate(context) {
           codeExampleCon.appendChild(pre);
 
           let rawcode = document.createElement("code");
-          rawcode.innerHTML = codeExampleData.code;
+          let minLine = Math.max(parseInt(codeExampleData.minLine) - 3, 0);
+          let maxLine = Math.min(parseInt(codeExampleData.maxLine) + 3, codeExampleData.raw.length - 1);
+
+          let htmlCode = codeExampleData.raw.slice(minLine, maxLine + 1);
+          rawcode.innerHTML = htmlCode.join("\\n");
           rawcode.classList.add("javascript");
           pre.appendChild(rawcode);
 
@@ -222,19 +275,12 @@ function activate(context) {
           codeCon.appendChild(sexyLine);
         };
 
-        let codeExamples = ${JSON.stringify(content)}
-        codeExamples.forEach(function(codeExample) {
-          console.log(codeExample);
-          createCodeExample(codeExample);
-        });
-        document.querySelectorAll('pre code').forEach((block) => {
-          hljs.highlightBlock(block);
-        });
       </script>
       </body>
       </html>`;
         }
     });
+    //let codeExamples = ${JSON.stringify(content)}
     //codeExample.code = codeExample.code.replace(/(?:\r\n|\r|\n)/g, '<br>');
     context.subscriptions.push(disposable);
 }
