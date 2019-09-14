@@ -15,176 +15,206 @@ export function activate(context: vscode.ExtensionContext) {
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
 	let disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
+  // The code you place here will be executed every time your command is executed
 
-		// Display a message box to the user
-		//vscode.window.showInformationMessage('Hello Worlds!');
-    // Create and show a new webview
-    const panel = vscode.window.createWebviewPanel(
-      'catCoding', // Identifies the type of the webview. Used internally
-      'Cat Coding', // Title of the panel displayed to the user
-      vscode.ViewColumn.One, // Editor column to show the new webview panel in.
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true
-      } // Webview options. More on these later.
-      // And set its HTML content
-    );
+  // Display a message box to the user
+  //vscode.window.showInformationMessage('Hello Worlds!');
+  // Create and show a new webview
+  const panel = vscode.window.createWebviewPanel(
+    'catCoding', // Identifies the type of the webview. Used internally
+    'Cat Coding', // Title of the panel displayed to the user
+    vscode.ViewColumn.One, // Editor column to show the new webview panel in.
+    {
+      enableScripts: true,
+      retainContextWhenHidden: true
+    } // Webview options. More on these later.
+    // And set its HTML content
+  );
+  let editors: vscode.TextEditor[] = [];
 
-    panel.webview.onDidReceiveMessage(
-      message => {
-        switch (message.command) {
-          case 'alert':
-            vscode.window.showErrorMessage(message.text);
-            return;
-        }
-      },
-      undefined,
-      context.subscriptions
-    );
+  let newLastEditor = (editorCtx: vscode.TextEditor) => {
+    editors.unshift(editorCtx);
+    if(editors.length > 2){
+      editors.pop();
+    }
+  };
+
+  let getLastEditor = () => {
+    return editors[editors.length - 1];
+  };
 
 
-    // And get the special URI to use with the webview
-    //const jquerySrc = onDiskPath.with({ scheme: 'vscode-resource' });
-    //console.log(jquerySrc);
-    let results: {link: string, code: string}[] = [
-      {
-        "link": "https://stackoverflow.com/questions/35435042/how-can-i-define-an-array-of-objects",
-        "code": `let userTestStatus: { id: number, name: string }[] = [
-          { "id": 0, "name": "Available" },
-          { "id": 1, "name": "Ready" },
-          { "id": 2, "name": "Started" }
-      ];`
-      },{
-        "link": "https://parso.readthedocs.io/en/latest/index.html#docs",
-        "code": `this is a sentence that is technically
-        a line of code!`
+  panel.webview.onDidReceiveMessage(
+    message => {
+      switch (message.command) {
+        case 'alert':
+          vscode.window.showErrorMessage(message.text);
+          const editor = getLastEditor(); //vscode.window.activeTextEditor;
+
+          if(editor !== undefined){
+            const fullText = editor.document.getText();
+            vscode.window.showErrorMessage(fullText);
+            /*const fullRange = new vscode.Range(
+                editor.document.positionAt(0),
+                editor.document.positionAt(fullText.length - 1)
+            );*/
+            //vscode.window.showErrorMessage(fullRange);
+          }
+          return;
       }
-    ];
+    },
+    undefined,
+    context.subscriptions
+  );
 
-    panel.webview.html = getWebviewContent(results);
-    function getWebviewContent(content: {link: string, code: string}[]) {
-        return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Cat Coding</title>
-        </head>
-        <style>
-        .codeExample{
-          background-color: #1a1e23;
-          border-radius: 5px;
-          border: 1px solid white;
-          padding: 6px;
-          margin: 3px;
-          margin-top: 10px;
-          /*white-space: pre-wrap;*/
-          position: relative;
-        }
-        .codeExampleCon{
-          /*background-color: #2c3823;
-          border-radius: 10px;*/
-          padding: 10px;
-          margin: 10px;
-          position: relative;
-        }
-        .codeExampleLink{
-          color: white;
-          height: 10px;
-          margin: 10px;
-          position: relative;
-          text-decoration: none;
-          margin-bottom: 20px;
-        }
-        .sexyLine{
-          position: relative;
-          width: 100%;
-          height: 1px;
-          background: black;
-          background: -webkit-gradient(linear, 0 0, 100% 0, from(black), to(black), color-stop(50%, white));
-          border: 0px;
-          margin-top: 40px;
-          margin-bottom: 40px;
-        }
-        </style>
-        <body>
-          <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
-          <button id="testbtn">stuff</button>
-          <div id="codeCon">
-          </div>
-          <script>
-          const vscode = acquireVsCodeApi();
-          console.log("hi");
+  // onDidChangeActiveTerminal
+  // workspace.onDidChangeTextDocument
 
-          document.getElementById('testbtn').onclick = function(){
-            console.log("pressed");
-            vscode.postMessage({
-              command: 'alert',
-              text: '🐛  on line '
-            });
-          };
+  vscode.window.onDidChangeActiveTextEditor(editor => {
+    if(editor === undefined){
+      return;
+    }
+    newLastEditor(editor);
+    console.log("onDidChangeActiveTextEditor" + editor.document.fileName);
+    //console.log(vscode.window.activeTextEditor.document.uri);
+  });
 
-          let createCodeExample = (codeExampleData) => {
-            let codeCon = document.getElementById("codeCon");
+  /*console.log(`Did change: ${changeEvent.document.uri}`);
 
-            var codeExampleCon = document.createElement("div");
-            codeExampleCon.classList.add("codeExampleCon");
-            codeCon.appendChild(codeExampleCon);
+  for (const change of changeEvent.contentChanges) {
+        console.log(change.range); // range of text being replaced
+        console.log(change.text); // text replacement
+  }*/
 
-            var codeExampleLink = document.createElement("a");
-            codeExampleLink.classList.add("codeExampleLink");
-            //codeExampleLink.setAttribute('href', codeExampleData.link);
-            codeExampleLink.href = codeExampleData.link;
-            codeExampleLink.innerText = codeExampleData.link;
-            codeExampleCon.appendChild(codeExampleLink);
+  // And get the special URI to use with the webview
+  // const jquerySrc = onDiskPath.with({ scheme: 'vscode-resource' });
+  // console.log(jquerySrc);
 
-            var pre = document.createElement("pre");
-            pre.classList.add("codeExample");
-            codeExampleCon.appendChild(pre);
+  let results: {link: string, code: string}[] = [
+    {
+      "link": "https://stackoverflow.com/questions/35435042/how-can-i-define-an-array-of-objects",
+      "code": `let userTestStatus: { id: number, name: string }[] = [
+        { "id": 0, "name": "Available" },
+        { "id": 1, "name": "Ready" },
+        { "id": 2, "name": "Started" }
+    ];`
+    },{
+      "link": "https://parso.readthedocs.io/en/latest/index.html#docs",
+      "code": `this is a sentence that is technically
+      a line of code!`
+    }
+  ];
 
-            let rawcode = document.createElement("code");
-            rawcode.innerHTML = codeExampleData.code;
-            rawcode.classList.add("javascript");
-            pre.appendChild(rawcode);
-
-            // Add separator line
-
-            var sexyLine = document.createElement("hr");
-            sexyLine.classList.add("sexyLine");
-            codeCon.appendChild(sexyLine);
-          };
-
-          let codeExamples = ${JSON.stringify(content)}
-          codeExamples.forEach(function(codeExample) {
-            console.log(codeExample);
-            createCodeExample(codeExample);
-          });
-          document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightBlock(block);
-          });
-        </script>
-        </body>
-        </html>`;
+  panel.webview.html = getWebviewContent(results);
+  function getWebviewContent(content: {link: string, code: string}[]) {
+      return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Cat Coding</title>
+      </head>
+      <style>
+      .codeExample{
+        background-color: #1a1e23;
+        border-radius: 5px;
+        border: 1px solid white;
+        padding: 6px;
+        margin: 3px;
+        margin-top: 10px;
+        /*white-space: pre-wrap;*/
+        position: relative;
       }
+      .codeExampleCon{
+        /*background-color: #2c3823;
+        border-radius: 10px;*/
+        padding: 10px;
+        margin: 10px;
+        position: relative;
+      }
+      .codeExampleLink{
+        color: white;
+        height: 10px;
+        margin: 10px;
+        position: relative;
+        text-decoration: none;
+        margin-bottom: 20px;
+      }
+      .sexyLine{
+        position: relative;
+        width: 100%;
+        height: 1px;
+        background: black;
+        background: -webkit-gradient(linear, 0 0, 100% 0, from(black), to(black), color-stop(50%, white));
+        border: 0px;
+        margin-top: 40px;
+        margin-bottom: 40px;
+      }
+      </style>
+      <body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
+        <button id="testbtn">stuff</button>
+        <div id="codeCon">
+        </div>
+        <script>
+        const vscode = acquireVsCodeApi();
+        console.log("hi");
+
+        document.getElementById('testbtn').onclick = function(){
+          console.log("pressed");
+          vscode.postMessage({
+            command: 'alert',
+            text: '🐛  on line '
+          });
+        };
+
+        let createCodeExample = (codeExampleData) => {
+          let codeCon = document.getElementById("codeCon");
+
+          var codeExampleCon = document.createElement("div");
+          codeExampleCon.classList.add("codeExampleCon");
+          codeCon.appendChild(codeExampleCon);
+
+          var codeExampleLink = document.createElement("a");
+          codeExampleLink.classList.add("codeExampleLink");
+          //codeExampleLink.setAttribute('href', codeExampleData.link);
+          codeExampleLink.href = codeExampleData.link;
+          codeExampleLink.innerText = codeExampleData.link;
+          codeExampleCon.appendChild(codeExampleLink);
+
+          var pre = document.createElement("pre");
+          pre.classList.add("codeExample");
+          codeExampleCon.appendChild(pre);
+
+          let rawcode = document.createElement("code");
+          rawcode.innerHTML = codeExampleData.code;
+          rawcode.classList.add("javascript");
+          pre.appendChild(rawcode);
+
+          // Add separator line
+
+          var sexyLine = document.createElement("hr");
+          sexyLine.classList.add("sexyLine");
+          codeCon.appendChild(sexyLine);
+        };
+
+        let codeExamples = ${JSON.stringify(content)}
+        codeExamples.forEach(function(codeExample) {
+          console.log(codeExample);
+          createCodeExample(codeExample);
+        });
+        document.querySelectorAll('pre code').forEach((block) => {
+          hljs.highlightBlock(block);
+        });
+      </script>
+      </body>
+      </html>`;
+    }
   });
   //codeExample.code = codeExample.code.replace(/(?:\r\n|\r|\n)/g, '<br>');
 
-  let form = vscode.commands.registerCommand('extension.formThing', () => {
-    // Create and show a new webview
-    const panel = vscode.window.createWebviewPanel(
-      'catCoding', // Identifies the type of the webview. Used internally
-      'Cat Coding', // Title of the panel displayed to the user
-      vscode.ViewColumn.One, // Editor column to show the new webview panel in.
-      {
-        // Enable scripts in the webview
-        enableScripts: true
-      } // Webview options. More on these later.
-    );
-  });
 	context.subscriptions.push(disposable);
-  //context.subscriptions.push(form);
 }
 
 // this method is called when your extension is deactivated
