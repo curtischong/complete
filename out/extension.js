@@ -187,6 +187,10 @@ function activate(context) {
         padding: 5px;
         margin: 20px;
       }
+      .highlightedLine{
+        background-color: #003e8a
+      }
+      .hljs{display:block;overflow-x:auto;padding:.5em;background:#282a36;border-radius:5px;}.hljs-built_in,.hljs-link,.hljs-section,.hljs-selector-tag{color:#8be9fd}.hljs-keyword{color:#ff79c6}.hljs,.hljs-subst{color:#f8f8f2}.hljs-title{color:#50fa7b}.hljs-addition,.hljs-attr,.hljs-bullet,.hljs-meta,.hljs-name,.hljs-string,.hljs-symbol,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable{color:#f1fa8c}.hljs-comment,.hljs-deletion,.hljs-quote{color:#6272a4}.hljs-doctag,.hljs-keyword,.hljs-literal,.hljs-name,.hljs-section,.hljs-selector-tag,.hljs-strong,.hljs-title,.hljs-type{font-weight:700}.hljs-literal,.hljs-number{color:#bd93f9}.hljs-emphasis{font-style:italic}
       </style>
       <body>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
@@ -262,6 +266,11 @@ function activate(context) {
           let rawcode = document.createElement("code");
           let minLine = Math.max(parseInt(codeExampleData.minLine) - 3, 0);
           let maxLine = Math.min(parseInt(codeExampleData.maxLine) + 3, codeExampleData.raw.length - 1);
+
+          let lineNums = codeExampleData.lineNums;
+          lineNums.forEach(function(num){
+            codeExampleData.raw[num] = '<span class="highlightedLine">' + codeExampleData.raw[num] + '</span>';
+          });
 
           let htmlCode = codeExampleData.raw.slice(minLine, maxLine + 1);
           rawcode.innerHTML = htmlCode.join("\\n");
