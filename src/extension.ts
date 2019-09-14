@@ -1,3 +1,5 @@
+import * as request from "request-promise-native";
+
 // To bring other people's ideas into your code.
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -43,6 +45,40 @@ export function activate(context: vscode.ExtensionContext) {
     return editors[editors.length - 1];
   };
 
+  let getLanguage = (editor: vscode.TextEditor) => {
+    return "python";
+  };
+
+  let sendCode = async (code: string) => {
+    const baseUrl = 'http://127.0.0.1:5000/';
+    var options = {
+      method: 'POST',
+      uri: baseUrl,
+      body: {
+        code: code,
+        language: getLanguage(getLastEditor()),
+        results_num: 3
+      },
+      json: true // Automatically stringifies the body to JSON
+    };
+
+    const result = await request.get(options);
+    console.log(result);
+  };
+
+  let highlightTimeout: NodeJS.Timeout;
+
+  // consider looking at mouse up events:
+  // https://code.visualstudio.com/api/references/vscode-api#TextEditorSelectionChangeKind
+  vscode.window.onDidChangeTextEditorSelection(() => {
+    const editor = getLastEditor();
+    var selection = editor.selection;
+    var text = editor.document.getText(selection);
+    clearTimeout(highlightTimeout);
+    highlightTimeout = setTimeout(function(){
+      sendCode(text);
+    }, 1000);
+  });
 
   panel.webview.onDidReceiveMessage(
     message => {
@@ -51,7 +87,9 @@ export function activate(context: vscode.ExtensionContext) {
           vscode.window.showErrorMessage(message.text);
           const editor = getLastEditor(); //vscode.window.activeTextEditor;
 
-          if(editor !== undefined){
+          if(editor === undefined){
+            vscode.window.showErrorMessage("Error: no editor detected");
+          }
             const fullText = editor.document.getText();
             vscode.window.showErrorMessage(fullText);
             /*const fullRange = new vscode.Range(
@@ -59,12 +97,9 @@ export function activate(context: vscode.ExtensionContext) {
                 editor.document.positionAt(fullText.length - 1)
             );*/
             //vscode.window.showErrorMessage(fullRange);
-          }
           return;
       }
     },
-    undefined,
-    context.subscriptions
   );
 
   // onDidChangeActiveTerminal

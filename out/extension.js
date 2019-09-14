@@ -1,5 +1,15 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const request = require("request-promise-native");
 // To bring other people's ideas into your code.
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -37,23 +47,54 @@ function activate(context) {
         let getLastEditor = () => {
             return editors[editors.length - 1];
         };
+        let getLanguage = (editor) => {
+            return "python";
+        };
+        let sendCode = (code) => __awaiter(this, void 0, void 0, function* () {
+            const baseUrl = 'http://127.0.0.1:5000/';
+            var options = {
+                method: 'POST',
+                uri: baseUrl,
+                body: {
+                    code: code,
+                    language: getLanguage(getLastEditor()),
+                    results_num: 3
+                },
+                json: true // Automatically stringifies the body to JSON
+            };
+            const result = yield request.get(options);
+            console.log(result);
+        });
+        let highlightTimeout;
+        // consider looking at mouse up events:
+        // https://code.visualstudio.com/api/references/vscode-api#TextEditorSelectionChangeKind
+        vscode.window.onDidChangeTextEditorSelection(() => {
+            const editor = getLastEditor();
+            var selection = editor.selection;
+            var text = editor.document.getText(selection);
+            clearTimeout(highlightTimeout);
+            highlightTimeout = setTimeout(function () {
+                sendCode(text);
+            }, 1000);
+        });
         panel.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'alert':
                     vscode.window.showErrorMessage(message.text);
                     const editor = getLastEditor(); //vscode.window.activeTextEditor;
-                    if (editor !== undefined) {
-                        const fullText = editor.document.getText();
-                        vscode.window.showErrorMessage(fullText);
-                        /*const fullRange = new vscode.Range(
-                            editor.document.positionAt(0),
-                            editor.document.positionAt(fullText.length - 1)
-                        );*/
-                        //vscode.window.showErrorMessage(fullRange);
+                    if (editor === undefined) {
+                        vscode.window.showErrorMessage("Error: no editor detected");
                     }
+                    const fullText = editor.document.getText();
+                    vscode.window.showErrorMessage(fullText);
+                    /*const fullRange = new vscode.Range(
+                        editor.document.positionAt(0),
+                        editor.document.positionAt(fullText.length - 1)
+                    );*/
+                    //vscode.window.showErrorMessage(fullRange);
                     return;
             }
-        }, undefined, context.subscriptions);
+        });
         // onDidChangeActiveTerminal
         // workspace.onDidChangeTextDocument
         vscode.window.onDidChangeActiveTextEditor(editor => {
