@@ -37,9 +37,10 @@ export function activate(context: vscode.ExtensionContext) {
     // And get the special URI to use with the webview
     //const jquerySrc = onDiskPath.with({ scheme: 'vscode-resource' });
     //console.log(jquerySrc);
+    let results: string[] = ["one","two","three","four","five","six","seven"];
 
-    panel.webview.html = getWebviewContent();
-    function getWebviewContent() {
+    panel.webview.html = getWebviewContent(results);
+    function getWebviewContent(content: string[]) {
         return `
         <!DOCTYPE html>
         <html lang="en">
@@ -49,16 +50,16 @@ export function activate(context: vscode.ExtensionContext) {
             <title>Cat Coding</title>
         </head>
         <body>
-          <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300"/>
           <button id="testbtn">stuff</button>
-          <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/core.js"></script>
           <script>
             console.log("hi");
-          $(document).ready(function(){
-            $("#testbtn").on("click", function(){
+            document.getElementById('testbtn').onclick = function(){
               console.log("pressed");
-            });
-          });
+            };
+            let results = ${JSON.stringify(content)}
+            for (var i = 0; i < results.length; i++) {
+              console.log(results[i]);
+            }
           /*(function() {
               const vscode = acquireVsCodeApi();
               const counter = document.getElementById('testbtn');
