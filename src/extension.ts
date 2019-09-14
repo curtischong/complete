@@ -202,6 +202,12 @@ export function activate(context: vscode.ExtensionContext) {
       .highlightedLine{
         background-color: #003e8a
       }
+      .fullCodeBtn{
+        color: white;
+        background: none;
+        cursor: pointer;
+        border: none;
+      }
       .hljs{display:block;overflow-x:auto;padding:.5em;background:#282a36;border-radius:5px;}.hljs-built_in,.hljs-link,.hljs-section,.hljs-selector-tag{color:#8be9fd}.hljs-keyword{color:#ff79c6}.hljs,.hljs-subst{color:#f8f8f2}.hljs-title{color:#50fa7b}.hljs-addition,.hljs-attr,.hljs-bullet,.hljs-meta,.hljs-name,.hljs-string,.hljs-symbol,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable{color:#f1fa8c}.hljs-comment,.hljs-deletion,.hljs-quote{color:#6272a4}.hljs-doctag,.hljs-keyword,.hljs-literal,.hljs-name,.hljs-section,.hljs-selector-tag,.hljs-strong,.hljs-title,.hljs-type{font-weight:700}.hljs-literal,.hljs-number{color:#bd93f9}.hljs-emphasis{font-style:italic}
       </style>
       <body>
@@ -219,7 +225,7 @@ export function activate(context: vscode.ExtensionContext) {
             console.log(searchCode.value)
             vscode.postMessage({
               command: 'searchCode',
-              search: 'searchCode.value'
+              search: searchCode.value
             });
           }
         });
@@ -232,13 +238,43 @@ export function activate(context: vscode.ExtensionContext) {
           });
         };
 
+        let showFullCode = (codeExampleData) => {
+          console.log("showing the entire code")
+          let codeCon = document.getElementById("codeCon");
+          codeCon.innerHTML = "";
+
+          var codeExampleCon = document.createElement("div");
+          codeExampleCon.classList.add("codeExampleCon");
+          codeCon.appendChild(codeExampleCon);
+
+          var pre = document.createElement("pre");
+          pre.classList.add("codeExample");
+          codeExampleCon.appendChild(pre);
+
+          let rawcode = document.createElement("code");
+
+          let lineNums = codeExampleData.lineNums;
+          lineNums.forEach(function(num){
+            codeExampleData.raw[num] = '<span class="highlightedLine">' + codeExampleData.raw[num] + '</span>';
+          });
+
+          let htmlCode = codeExampleData.raw
+          rawcode.innerHTML = htmlCode.join("\\n");
+          rawcode.classList.add("javascript");
+          pre.appendChild(rawcode);
+
+          document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+          });
+        };
+
+
         window.addEventListener('message', event => {
 
           const message = event.data; // The JSON data our extension sent
 
           switch (message.command) {
             case 'loadCodeExamples':
-              console.log("asd");
               createCodeExamples(message.codeExamples);
               break;
           }
@@ -247,10 +283,20 @@ export function activate(context: vscode.ExtensionContext) {
         let createCodeExamples = (codeExamples) => {
           let codeCon = document.getElementById("codeCon");
           codeCon.innerHTML = "";
-          codeExamples.forEach(function(codeExample) {
+
+          for(let i = 0; i < codeExamples.length; i++){
+            let codeExample = codeExamples[i];
             console.log(codeExample);
             createCodeExample(codeExample);
-          });
+
+            // Add separator line
+            
+            /*if(i < codeExamples - 1){
+              var sexyLine = document.createElement("hr");
+              sexyLine.classList.add("sexyLine");
+              codeCon.appendChild(sexyLine);
+            }*/
+          }
 
           document.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightBlock(block);
@@ -264,12 +310,13 @@ export function activate(context: vscode.ExtensionContext) {
           codeExampleCon.classList.add("codeExampleCon");
           codeCon.appendChild(codeExampleCon);
 
-          var codeExampleLink = document.createElement("a");
-          codeExampleLink.classList.add("codeExampleLink");
-          //codeExampleLink.setAttribute('href', codeExampleData.url);
-          codeExampleLink.href = codeExampleData.url;
-          codeExampleLink.innerText = codeExampleData.url;
-          codeExampleCon.appendChild(codeExampleLink);
+          var fullCodeBtn = document.createElement("button")
+          fullCodeBtn.classList.add("fullCodeBtn");
+          fullCodeBtn.innerHTML = "Full Code";
+          fullCodeBtn.onclick = function(){
+            showFullCode(codeExampleData);
+          };
+          codeExampleCon.appendChild(fullCodeBtn);
 
           var pre = document.createElement("pre");
           pre.classList.add("codeExample");
@@ -280,20 +327,16 @@ export function activate(context: vscode.ExtensionContext) {
           let maxLine = Math.min(parseInt(codeExampleData.maxLine) + 3, codeExampleData.raw.length - 1);
 
           let lineNums = codeExampleData.lineNums;
+          let finalCodeLines = codeExampleData.raw;
           lineNums.forEach(function(num){
-            codeExampleData.raw[num] = '<span class="highlightedLine">' + codeExampleData.raw[num] + '</span>';
+            finalCodeLines[num] = '<span class="highlightedLine">' + finalCodeLines[num] + '</span>';
           });
 
-          let htmlCode = codeExampleData.raw.slice(minLine, maxLine + 1);
+          let htmlCode = finalCodeLines.slice(minLine, maxLine + 1);
           rawcode.innerHTML = htmlCode.join("\\n");
           rawcode.classList.add("javascript");
           pre.appendChild(rawcode);
 
-          // Add separator line
-
-          var sexyLine = document.createElement("hr");
-          sexyLine.classList.add("sexyLine");
-          codeCon.appendChild(sexyLine);
         };
 
       </script>
