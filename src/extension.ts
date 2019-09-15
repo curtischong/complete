@@ -50,8 +50,15 @@ export function activate(context: vscode.ExtensionContext) {
     console.log("onDidChangeActiveTextEditor" + editor.document.fileName);
   });
 
-  let getLastEditor = () => {
-    return editors[editors.length - 1];
+
+  let getEditor = () => {
+    let curEditor = vscode.window.activeTextEditor;
+    let editor;
+    if(curEditor === undefined){
+      // gets the last editor that's valid
+      return editors[editors.length - 1];
+    }
+    return curEditor;
   };
 
   let getLanguage = (editor: vscode.TextEditor) => {
@@ -59,14 +66,10 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   let sendCode = async (code: string) => {
-    // TODO: think about this getLastEditor thing. I think it's get active editor
-    let curEditor = vscode.window.activeTextEditor;
-    let editor;
-    if(curEditor ===undefined){
-      editor = getLastEditor();
-    }else{
-      editor = curEditor;
-    }
+    console.log("sendCode");
+    console.log(code);
+    const editor = getEditor();
+    console.log(editor.document.fileName);
     var options = {
       method: 'POST',
       uri: baseUrl,
@@ -88,10 +91,16 @@ export function activate(context: vscode.ExtensionContext) {
 
   // consider looking at mouse up events:
   // https://code.visualstudio.com/api/references/vscode-api#TextEditorSelectionChangeKind
-  vscode.window.onDidChangeTextEditorSelection(() => {
-    const editor = getLastEditor();
+  vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) => {
+    //console.log(event.kind);
+    // kind== 2 is mouse
+
+    const editor = getEditor();
     var selection = editor.selection;
     var text = editor.document.getText(selection);
+    if(text.length < 3){
+      return;
+    }
     clearTimeout(highlightTimeout);
     highlightTimeout = setTimeout(function(){
       sendCode(text);
