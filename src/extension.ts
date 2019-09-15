@@ -41,6 +41,14 @@ export function activate(context: vscode.ExtensionContext) {
     }
   };
 
+  vscode.window.onDidChangeActiveTextEditor(editor => {	
+    if(editor === undefined){
+      return;
+    }
+    newLastEditor(editor);
+    console.log("onDidChangeActiveTextEditor" + editor.document.fileName);
+  });
+
   let getLastEditor = () => {
     return editors[editors.length - 1];
   };
@@ -118,21 +126,26 @@ export function activate(context: vscode.ExtensionContext) {
 
     let curCode = editor.document.getText(lineRange);
     console.log(curCode);
-    let startSection = curCode.trim().substring(0, 3);
-    let lastSection = curCode.trim().substring(curCode.length - 3);
-    if(startSection === "@RS" && lastSection ==="@RE"){
+    console.log(curCode.trimLeft());
+    let startSection = curCode.trimLeft().substring(0, 2);
+    let lastSection = curCode.trimLeft().substring(curCode.trimLeft().length - 2);
+    if(startSection === "@S" && lastSection ==="@E"){
       editor.edit(edit => {
-        let firstToken = curCode.indexOf("@RS");
-        let deleteRange1Start = new vscode.Position(lineRange.start.line, lineRange.start.character);
-        let deleteRange1End = new vscode.Position(lineRange.end.line, lineRange.end.character);
+        let firstToken = curCode.indexOf("@S");
+        let deleteRange1Start = new vscode.Position(lineRange.start.line, firstToken);
+        let deleteRange1End = new vscode.Position(lineRange.end.line, firstToken + 2);
         let deleteRange1 = new vscode.Range(deleteRange1Start, deleteRange1End);
         edit.delete(deleteRange1);
 
-        let deleteRange2Start = new vscode.Position(lineRange.start.line, lineRange.start.character);
-        let deleteRange2End = new vscode.Position(lineRange.end.line, lineRange.end.character);
+        let lastToken = curCode.indexOf("@E");
+        let deleteRange2Start = new vscode.Position(lineRange.start.line, lastToken);
+        let deleteRange2End = new vscode.Position(lineRange.end.line, lastToken + 2);
         let deleteRange2 = new vscode.Range(deleteRange2Start, deleteRange2End);
         edit.delete(deleteRange2);
-        edit.insert(new vscode.Position(0, 0), "Your advertisement here");
+
+        let newLine = editor.document.getText(lineRange);
+        edit.insert(new vscode.Position(lineRange.start.line+1, 0), "Your advertisement here\n");
+        //edit.insert(new vscode.Position(lineRange.start.line, curCode.length-2), "\n");
       });
     }
 
@@ -141,17 +154,6 @@ export function activate(context: vscode.ExtensionContext) {
   // onDidChangeActiveTerminal
   // workspace.onDidChangeTextDocument
 
-  var setting: vscode.Uri = vscode.Uri.parse("untitled:" + "C:\summary.txt");
-vscode.workspace.openTextDocument(setting).then((a: vscode.TextDocument) => {
-    vscode.window.showTextDocument(a, 1, false).then(e => {
-        e.edit(edit => {
-            edit.insert(new vscode.Position(0, 0), "Your advertisement here");
-        });
-    });
-}, (error: any) => {
-    console.error(error);
-    debugger;
-});
 
   /*console.log(`Did change: ${changeEvent.document.uri}`);
 
