@@ -117,7 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  let getCodeFromDocStrings = async (docString: string, position: vscode.Position, editor: vscode.TextEditor) => {
+  let getCodeFromDocStrings = async (lineNum:number, docString: string, position: vscode.Position, editor: vscode.TextEditor) => {
     var options = {
       method: 'POST',
       uri: baseUrl + "getCodeFromDocStrings",
@@ -132,6 +132,12 @@ export function activate(context: vscode.ExtensionContext) {
       console.log(result);
       let replacementCode = result[0];
       replacementCode += "\n";
+
+      /*for(let i = 0; i < replacementCode.split("\n").length - 1; i++){
+        edit.insert(new vscode.Position(lineNum+1, 0), "\n");
+      }*/
+
+
       edit.insert(position, replacementCode);
       //as any [string];
     });
@@ -178,12 +184,10 @@ export function activate(context: vscode.ExtensionContext) {
         let docStringLine = editor.document.getText(docStringLoc);
         let docString = docStringLine.trimLeft().substring(2, docStringLine.trimLeft().length-2);
         console.log(docString);
-        getCodeFromDocStrings(docString, new vscode.Position(lineRange.start.line+1, 0), editor);
+        getCodeFromDocStrings(lineNum, docString, new vscode.Position(lineRange.start.line+1, 0), editor);
 
         //TODO: Move the cursor to the end of the replacement code
         //let newLine = editor.document.getText(lineRange);
-        let replacementCode = "Your advertisement here";
-        replacementCode += "\n";
       });
     }
 
@@ -308,7 +312,10 @@ export function activate(context: vscode.ExtensionContext) {
       .hljs{display:block;overflow-x:auto;padding:.5em;background:#282a36;border-radius:5px;}.hljs-built_in,.hljs-link,.hljs-section,.hljs-selector-tag{color:#8be9fd}.hljs-keyword{color:#ff79c6}.hljs,.hljs-subst{color:#f8f8f2}.hljs-title{color:#50fa7b}.hljs-addition,.hljs-attr,.hljs-bullet,.hljs-meta,.hljs-name,.hljs-string,.hljs-symbol,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable{color:#f1fa8c}.hljs-comment,.hljs-deletion,.hljs-quote{color:#6272a4}.hljs-doctag,.hljs-keyword,.hljs-literal,.hljs-name,.hljs-section,.hljs-selector-tag,.hljs-strong,.hljs-title,.hljs-type{font-weight:700}.hljs-literal,.hljs-number{color:#bd93f9}.hljs-emphasis{font-style:italic}
       </style>
       <body>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/languages/python.min.js"></script>
+
         <div id="windowBody">
           <div style="position:relative;height: 60px;margin-bottom: 10px;">
             <input id="searchCode" placeholder="Search for code"/>
@@ -384,7 +391,7 @@ export function activate(context: vscode.ExtensionContext) {
             });
 
             rawcode.innerHTML = code.join("\\n");
-            rawcode.classList.add("javascript");
+            rawcode.classList.add("language-python");
             pre.appendChild(rawcode);
 
             document.querySelectorAll('pre code').forEach((block) => {
@@ -477,6 +484,7 @@ export function activate(context: vscode.ExtensionContext) {
       </script>
       </body>
       </html>`;
+      // <script>hljs.registerLanguage("python",function(e){var r={keyword:"and elif is global as in if from raise for except finally print import pass return exec else break not with class assert yield try while continue del or def lambda async await nonlocal|10",built_in:"Ellipsis NotImplemented",literal:"False None True"},b={cN:"meta",b:/^(>>>|\\.\\.\\.) /},c={cN:"subst",b:/\\{/,e:/\\}/,k:r,i:/#/},a={cN:"string",c:[e.BE],v:[{b:/(u|b)?r?'''/,e:/'''/,c:[e.BE,b],r:10},{b:/(u|b)?r?"""/,e:/"""/,c:[e.BE,b],r:10},{b:/(fr|rf|f)'''/,e:/'''/,c:[e.BE,b,c]},{b:/(fr|rf|f)"""/,e:/"""/,c:[e.BE,b,c]},{b:/(u|r|ur)'/,e:/'/,r:10},{b:/(u|r|ur)"/,e:/"/,r:10},{b:/(b|br)'/,e:/'/},{b:/(b|br)"/,e:/"/},{b:/(fr|rf|f)'/,e:/'/,c:[e.BE,c]},{b:/(fr|rf|f)"/,e:/"/,c:[e.BE,c]},e.ASM,e.QSM]},i={cN:"number",r:0,v:[{b:e.BNR+"[lLjJ]?"},{b:"\\b(0o[0-7]+)[lLjJ]?"},{b:e.CNR+"[lLjJ]?"}]},l={cN:"params",b:/\\(/,e:/\\)/,c:["self",b,i,a]};return c.c=[a,i,b],{aliases:["py","gyp","ipython"],k:r,i:/(<\\/|->|\\?)|=>/,c:[b,i,a,e.HCM,{v:[{cN:"function",bK:"def"},{cN:"class",bK:"class"}],e:/:/,i:/[\${=;\\n,]/,c:[e.UTM,l,{b:/->/,eW:!0,k:"None"}]},{cN:"meta",b:/^[\\t ]*@/,e:/$/},{b:/\\b(print|exec)\\(/}]}});</script>
     }
   });
         //let codeExamples = ${JSON.stringify(content)}
