@@ -260,7 +260,7 @@ function activate(context) {
         border-bottom-right-radius: 20px;
       }
       .highlightedLine{
-        background-color: #003e8a
+        background-color: #b3b31b
       }
       .fullCodeBtn{
         color: white;
@@ -285,6 +285,9 @@ function activate(context) {
       }
       #codeCon{
         position: relative;
+      }
+      .hidden-code{
+        color: #e35f00;
       }
       .hljs{display:block;overflow-x:auto;padding:.5em;background:#282a36;border-radius:5px;}.hljs-built_in,.hljs-link,.hljs-section,.hljs-selector-tag{color:#8be9fd}.hljs-keyword{color:#ff79c6}.hljs,.hljs-subst{color:#f8f8f2}.hljs-title{color:#50fa7b}.hljs-addition,.hljs-attr,.hljs-bullet,.hljs-meta,.hljs-name,.hljs-string,.hljs-symbol,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable{color:#f1fa8c}.hljs-comment,.hljs-deletion,.hljs-quote{color:#6272a4}.hljs-doctag,.hljs-keyword,.hljs-literal,.hljs-name,.hljs-section,.hljs-selector-tag,.hljs-strong,.hljs-title,.hljs-type{font-weight:700}.hljs-literal,.hljs-number{color:#bd93f9}.hljs-emphasis{font-style:italic}
       </style>
@@ -435,18 +438,23 @@ function activate(context) {
 
           let lineNums = codeExampleData.lineNums;
           let codeLines = codeExampleData.codeLines;
-
-          /*
-          lineNums.forEach(function(num){
-            finalCodeLines[num] = '<span class="highlightedLine">' + finalCodeLines[num] + '</span>';
-          });*/
+          let moduleLines = codeExampleData.moduleLines;
+          console.log("moduleLines");
+          console.log(moduleLines);
+          if(moduleLines !== undefined){
+            for(let i = 0; i < moduleLines.length;i++){
+              if(moduleLines[i]){
+                // codeLines[i] = '<span class="highlightedLine">' + codeLines[i] + '</span>';
+              }
+            }
+          }
 
           let finalCodeLines = [];
           let lastLine = -1;
           for(let i = 0; i < lineNums.length; i++){
             let lineNum = parseInt(lineNums[i]);
             if(lastLine != -1 && lineNum > lastLine + 1){
-              finalCodeLines.push('...');
+              finalCodeLines.push('<span class="hidden-code">...</span>');
             }
             finalCodeLines.push(codeLines[i]);
             lastLine = lineNum;
