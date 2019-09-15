@@ -105,17 +105,53 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  vscode.workspace.onDidChangeTextDocument(function(TextDocumentChangeEvent) {
+    const editor = vscode.window.activeTextEditor;
+    if(editor === undefined){
+      console.log("rip file changed but editor is not in focus");
+      return;
+    }
+    const position = editor.selection.active;
+    let lineNum = position.line;
+    let lineRange = editor.document.lineAt(lineNum).range;
+    //let lineRange = new vscode.Selection(lineRange.start, lineRange.end);
+
+    let curCode = editor.document.getText(lineRange);
+    console.log(curCode);
+    let startSection = curCode.trim().substring(0, 3);
+    let lastSection = curCode.trim().substring(curCode.length - 3);
+    if(startSection === "@RS" && lastSection ==="@RE"){
+      editor.edit(edit => {
+        let firstToken = curCode.indexOf("@RS");
+        let deleteRange1Start = new vscode.Position(lineRange.start.line, lineRange.start.character);
+        let deleteRange1End = new vscode.Position(lineRange.end.line, lineRange.end.character);
+        let deleteRange1 = new vscode.Range(deleteRange1Start, deleteRange1End);
+        edit.delete(deleteRange1);
+
+        let deleteRange2Start = new vscode.Position(lineRange.start.line, lineRange.start.character);
+        let deleteRange2End = new vscode.Position(lineRange.end.line, lineRange.end.character);
+        let deleteRange2 = new vscode.Range(deleteRange2Start, deleteRange2End);
+        edit.delete(deleteRange2);
+        edit.insert(new vscode.Position(0, 0), "Your advertisement here");
+      });
+    }
+
+  });
+
   // onDidChangeActiveTerminal
   // workspace.onDidChangeTextDocument
 
-  vscode.window.onDidChangeActiveTextEditor(editor => {
-    if(editor === undefined){
-      return;
-    }
-    newLastEditor(editor);
-    console.log("onDidChangeActiveTextEditor" + editor.document.fileName);
-    //console.log(vscode.window.activeTextEditor.document.uri);
-  });
+  var setting: vscode.Uri = vscode.Uri.parse("untitled:" + "C:\summary.txt");
+vscode.workspace.openTextDocument(setting).then((a: vscode.TextDocument) => {
+    vscode.window.showTextDocument(a, 1, false).then(e => {
+        e.edit(edit => {
+            edit.insert(new vscode.Position(0, 0), "Your advertisement here");
+        });
+    });
+}, (error: any) => {
+    console.error(error);
+    debugger;
+});
 
   /*console.log(`Did change: ${changeEvent.document.uri}`);
 
@@ -252,40 +288,48 @@ export function activate(context: vscode.ExtensionContext) {
 
         let showFullCode = (codeExampleData, codeExamples) => {
           console.log("showing the entire code")
-          let codeCon = document.getElementById("codeCon");
-          codeCon.innerHTML = "";
+          const Http = new XMLHttpRequest();
+          const url = codeExampleData.url;
+          Http.open("GET", url);
+          Http.send();
 
-          var fullCodeBackBtn = document.createElement("button");
-          fullCodeBackBtn.classList.add("fullCodeBackBtn");
-          fullCodeBackBtn.innerHTML = "< Back";
-          fullCodeBackBtn.onclick = function(){
-            createCodeExamples(codeExamples);
-          };
-          codeCon.appendChild(fullCodeBackBtn);
+          Http.onreadystatechange = (e) => {
+            let codeCon = document.getElementById("codeCon");
+            codeCon.innerHTML = "";
 
-          var codeExampleCon = document.createElement("div");
-          codeExampleCon.classList.add("codeExampleCon");
-          codeCon.appendChild(codeExampleCon);
+            var fullCodeBackBtn = document.createElement("button");
+            fullCodeBackBtn.classList.add("fullCodeBackBtn");
+            fullCodeBackBtn.innerHTML = "< Back";
+            fullCodeBackBtn.onclick = function(){
+              createCodeExamples(codeExamples);
+            };
+            codeCon.appendChild(fullCodeBackBtn);
 
-          var pre = document.createElement("pre");
-          pre.classList.add("codeExample");
-          codeExampleCon.appendChild(pre);
+            var codeExampleCon = document.createElement("div");
+            codeExampleCon.classList.add("codeExampleCon");
+            codeCon.appendChild(codeExampleCon);
 
-          let rawcode = document.createElement("code");
+            var pre = document.createElement("pre");
+            pre.classList.add("codeExample");
+            codeExampleCon.appendChild(pre);
 
-          let lineNums = codeExampleData.lineNums;
-          lineNums.forEach(function(num){
-            codeExampleData.raw[num] = '<span class="highlightedLine">' + codeExampleData.raw[num] + '</span>';
-          });
+            let rawcode = document.createElement("code");
+            let code = Http.responseText.split("\\n");
 
-          let htmlCode = codeExampleData.raw
-          rawcode.innerHTML = htmlCode.join("\\n");
-          rawcode.classList.add("javascript");
-          pre.appendChild(rawcode);
+            let lineNums = codeExampleData.lineNums;
+            lineNums.forEach(function(lineNum){
+              let num = parseInt(lineNum);
+              code[num] = '<span class="highlightedLine">' + code[num] + '</span>';
+            });
 
-          document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightBlock(block);
-          });
+            rawcode.innerHTML = code.join("\\n");
+            rawcode.classList.add("javascript");
+            pre.appendChild(rawcode);
+
+            document.querySelectorAll('pre code').forEach((block) => {
+              hljs.highlightBlock(block);
+            });
+          }
         };
 
 
@@ -305,7 +349,6 @@ export function activate(context: vscode.ExtensionContext) {
 
           for(let i = 0; i < codeExamples.length; i++){
             let codeExample = codeExamples[i];
-            console.log(codeExample);
             createCodeExample(codeExample, codeExamples);
 
             // Add separator line
@@ -342,20 +385,32 @@ export function activate(context: vscode.ExtensionContext) {
           codeExampleCon.appendChild(pre);
 
           let rawcode = document.createElement("code");
-          let minLine = Math.max(parseInt(codeExampleData.minLine) - 3, 0);
-          let maxLine = Math.min(parseInt(codeExampleData.maxLine) + 3, codeExampleData.raw.length - 1);
+          //let minLine = Math.max(parseInt(codeExampleData.minLine) - 3, 0);
+          //let maxLine = Math.min(parseInt(codeExampleData.maxLine) + 3, codeExampleData.raw.length - 1);
 
           let lineNums = codeExampleData.lineNums;
-          let finalCodeLines = codeExampleData.raw;
+          let codeLines = codeExampleData.codeLines;
+
+          /*
           lineNums.forEach(function(num){
             finalCodeLines[num] = '<span class="highlightedLine">' + finalCodeLines[num] + '</span>';
-          });
+          });*/
 
-          let htmlCode = finalCodeLines.slice(minLine, maxLine + 1);
-          rawcode.innerHTML = htmlCode.join("\\n");
+          let finalCodeLines = [];
+          let lastLine = -1;
+          for(let i = 0; i < lineNums.length; i++){
+            let lineNum = parseInt(lineNums[i]);
+            if(lastLine != -1 && lineNum > lastLine + 1){
+              finalCodeLines.push('...');
+            }
+            finalCodeLines.push(codeLines[i]);
+            lastLine = lineNum;
+          }
+
+          //let htmlCode = finalCodeLines.slice(minLine, maxLine + 1);
+          rawcode.innerHTML = finalCodeLines.join("\\n");
           rawcode.classList.add("javascript");
           pre.appendChild(rawcode);
-
         };
 
       </script>
