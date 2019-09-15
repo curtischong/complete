@@ -60,14 +60,21 @@ function activate(context) {
         };
         let sendCode = (code) => __awaiter(this, void 0, void 0, function* () {
             // TODO: think about this getLastEditor thing. I think it's get active editor
-            const editor = getLastEditor();
+            let curEditor = vscode.window.activeTextEditor;
+            let editor;
+            if (curEditor === undefined) {
+                editor = getLastEditor();
+            }
+            else {
+                editor = curEditor;
+            }
             var options = {
                 method: 'POST',
                 uri: baseUrl,
                 body: {
                     code: code,
                     fullCode: editor.document.getText(),
-                    language: getLanguage(getLastEditor()),
+                    language: getLanguage(editor),
                     results_num: 3,
                 },
                 json: true // Automatically stringifies the body to JSON
@@ -90,28 +97,15 @@ function activate(context) {
         });
         panel.webview.onDidReceiveMessage(message => {
             switch (message.command) {
-                case 'alert':
-                    vscode.window.showErrorMessage(message.text);
-                    const editor = getLastEditor(); //vscode.window.activeTextEditor;
-                    if (editor === undefined) {
-                        vscode.window.showErrorMessage("Error: no editor detected");
-                    }
-                    const fullText = editor.document.getText();
-                    vscode.window.showErrorMessage(fullText);
-                    /*const fullRange = new vscode.Range(
-                        editor.document.positionAt(0),
-                        editor.document.positionAt(fullText.length - 1)
-                    );*/
-                    //vscode.window.showErrorMessage(fullRange);
-                    return;
                 case 'searchCode':
                     sendCode(message.search);
+                    return;
             }
         });
         let getCodeFromDocStrings = (docString) => __awaiter(this, void 0, void 0, function* () {
             var options = {
                 method: 'POST',
-                uri: baseUrl,
+                uri: baseUrl + "getCodeFromDocStrings",
                 body: {
                     docString: docString
                 },
@@ -136,7 +130,7 @@ function activate(context) {
             if (startSection === "@S" && lastSection === "@E") {
                 editor.edit(edit => {
                     let firstToken = curCode.indexOf("@S");
-                    let deleteRange1Start = new vscode.Position(lineRange.start.line, firstToken);
+                    let deleteRange1Start = new vscode.Position(lineRange.start.line, 0); // delete at 0 so we can format it
                     let deleteRange1End = new vscode.Position(lineRange.end.line, firstToken + 2);
                     let deleteRange1 = new vscode.Range(deleteRange1Start, deleteRange1End);
                     edit.delete(deleteRange1);
@@ -145,36 +139,26 @@ function activate(context) {
                     let deleteRange2End = new vscode.Position(lineRange.end.line, lastToken + 2);
                     let deleteRange2 = new vscode.Range(deleteRange2Start, deleteRange2End);
                     edit.delete(deleteRange2);
+                    edit.insert(new vscode.Position(lineNum, 0), " # ");
                     // we need to add a new line if the cursor is at the end of the file
                     if (editor.document.getText().split("\n").length - 1 === lineNum) {
                         console.log("adding new line!");
                         edit.insert(new vscode.Position(lineRange.start.line, curCode.length - 2), "\n");
                     }
-                    //TODO: Move the cursor to the end of the replacement code
-                    //let newLine = editor.document.getText(lineRange);
-                    let replacementCode = "Your advertisement here";
-                    replacementCode += "\n";
-                    edit.insert(new vscode.Position(lineRange.start.line + 1, 0), replacementCode);
                     let docStringLoc = editor.document.lineAt(lineNum).range;
                     //let lineRange = new vscode.Selection(lineRange.start, lineRange.end);
                     let docStringLine = editor.document.getText(docStringLoc);
                     let docString = docStringLine.trimLeft().substring(2, docStringLine.trimLeft().length - 2);
                     console.log(docString);
                     getCodeFromDocStrings(docString);
+                    //TODO: Move the cursor to the end of the replacement code
+                    //let newLine = editor.document.getText(lineRange);
+                    let replacementCode = "Your advertisement here";
+                    replacementCode += "\n";
+                    edit.insert(new vscode.Position(lineRange.start.line + 1, 0), replacementCode);
                 });
             }
         });
-        // onDidChangeActiveTerminal
-        // workspace.onDidChangeTextDocument
-        /*console.log(`Did change: ${changeEvent.document.uri}`);
-      
-        for (const change of changeEvent.contentChanges) {
-              console.log(change.range); // range of text being replaced
-              console.log(change.text); // text replacement
-        }*/
-        // And get the special URI to use with the webview
-        // const jquerySrc = onDiskPath.with({ scheme: 'vscode-resource' });
-        // console.log(jquerySrc);
         let results = [
             {
                 "link": "https://stackoverflow.com/questions/35435042/how-can-i-define-an-array-of-objects",
@@ -235,15 +219,33 @@ function activate(context) {
         margin-top: 40px;
         margin-bottom: 40px;
       }
-      textarea:focus, input:focus{
+      input:focus, button:focus{
         outline: none;
       }
       #searchCode{
-        position: relative;
-        width: 90%;
+        width: 78%;
         border: 1px solid white;
-        padding: 5px;
+        height: 15px;
+        padding: 7px;
+        padding-left: 10px;
         margin: 20px;
+        margin-right: 0px;
+        float: left;
+        border-top-left-radius: 20px;
+        border-bottom-left-radius: 20px;
+      }
+      #searchCodeBtn{
+        background-color: #006dcc;
+        color: white;
+        cursor: pointer;
+        margin: 20px;
+        margin-left: 0px;
+        padding: 7px;
+        height: 31px;
+        float: left;
+        border: 1px solid #006dcc;
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
       }
       .highlightedLine{
         background-color: #003e8a
@@ -255,7 +257,8 @@ function activate(context) {
         border: 1ps solid white;
         border-radius: 3px;
         font-size: 12px;
-        left: 2px;
+        left: 3px;
+        position: relative;
       }
       .fullCodeBackBtn{
         color: white;
@@ -264,15 +267,22 @@ function activate(context) {
         border: 1ps solid white;
         border-radius: 3px;
         font-size: 12px;
-        left: 2px;
+        left: 22px;
+        position: relative;
+        margin-top: 10px;
+      }
+      #codeCon{
+        position: relative;
       }
       .hljs{display:block;overflow-x:auto;padding:.5em;background:#282a36;border-radius:5px;}.hljs-built_in,.hljs-link,.hljs-section,.hljs-selector-tag{color:#8be9fd}.hljs-keyword{color:#ff79c6}.hljs,.hljs-subst{color:#f8f8f2}.hljs-title{color:#50fa7b}.hljs-addition,.hljs-attr,.hljs-bullet,.hljs-meta,.hljs-name,.hljs-string,.hljs-symbol,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable{color:#f1fa8c}.hljs-comment,.hljs-deletion,.hljs-quote{color:#6272a4}.hljs-doctag,.hljs-keyword,.hljs-literal,.hljs-name,.hljs-section,.hljs-selector-tag,.hljs-strong,.hljs-title,.hljs-type{font-weight:700}.hljs-literal,.hljs-number{color:#bd93f9}.hljs-emphasis{font-style:italic}
       </style>
       <body>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
-        <button id="testbtn">stuff</button>
         <div id="windowBody">
-          <input id="searchCode" placeholder="Search for code"/>
+          <div style="position:relative;height: 60px;margin-bottom: 10px;">
+            <input id="searchCode" placeholder="Search for code"/>
+            <button id="searchCodeBtn">Search!</button>
+          </div>
           <div id="codeCon">
           </div>
         <script>
@@ -288,11 +298,21 @@ function activate(context) {
           }
         });
 
-        document.getElementById('testbtn').onclick = function(){
-          console.log("pressed");
+        searchCode.addEventListener("keyup", function(e){
+          if(e.keyCode==13){
+            console.log(searchCode.value)
+            vscode.postMessage({
+              command: 'searchCode',
+              search: searchCode.value
+            });
+          }
+        });
+
+        let searchCodeBtn = document.getElementById("searchCodeBtn")
+        searchCodeBtn.onclick = function(){
           vscode.postMessage({
-            command: 'alert',
-            text: '🐛  on line '
+            command: 'searchCode',
+            search: searchCode.value
           });
         };
 
