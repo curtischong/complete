@@ -206,7 +206,19 @@ export function activate(context: vscode.ExtensionContext) {
         color: white;
         background: none;
         cursor: pointer;
-        border: none;
+        border: 1ps solid white;
+        border-radius: 3px;
+        font-size: 12px;
+        left: 2px;
+      }
+      .fullCodeBackBtn{
+        color: white;
+        background: none;
+        cursor: pointer;
+        border: 1ps solid white;
+        border-radius: 3px;
+        font-size: 12px;
+        left: 2px;
       }
       .hljs{display:block;overflow-x:auto;padding:.5em;background:#282a36;border-radius:5px;}.hljs-built_in,.hljs-link,.hljs-section,.hljs-selector-tag{color:#8be9fd}.hljs-keyword{color:#ff79c6}.hljs,.hljs-subst{color:#f8f8f2}.hljs-title{color:#50fa7b}.hljs-addition,.hljs-attr,.hljs-bullet,.hljs-meta,.hljs-name,.hljs-string,.hljs-symbol,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable{color:#f1fa8c}.hljs-comment,.hljs-deletion,.hljs-quote{color:#6272a4}.hljs-doctag,.hljs-keyword,.hljs-literal,.hljs-name,.hljs-section,.hljs-selector-tag,.hljs-strong,.hljs-title,.hljs-type{font-weight:700}.hljs-literal,.hljs-number{color:#bd93f9}.hljs-emphasis{font-style:italic}
       </style>
@@ -238,10 +250,18 @@ export function activate(context: vscode.ExtensionContext) {
           });
         };
 
-        let showFullCode = (codeExampleData) => {
+        let showFullCode = (codeExampleData, codeExamples) => {
           console.log("showing the entire code")
           let codeCon = document.getElementById("codeCon");
           codeCon.innerHTML = "";
+
+          var fullCodeBackBtn = document.createElement("button");
+          fullCodeBackBtn.classList.add("fullCodeBackBtn");
+          fullCodeBackBtn.innerHTML = "< Back";
+          fullCodeBackBtn.onclick = function(){
+            createCodeExamples(codeExamples);
+          };
+          codeCon.appendChild(fullCodeBackBtn);
 
           var codeExampleCon = document.createElement("div");
           codeExampleCon.classList.add("codeExampleCon");
@@ -270,7 +290,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 
         window.addEventListener('message', event => {
-
           const message = event.data; // The JSON data our extension sent
 
           switch (message.command) {
@@ -287,10 +306,10 @@ export function activate(context: vscode.ExtensionContext) {
           for(let i = 0; i < codeExamples.length; i++){
             let codeExample = codeExamples[i];
             console.log(codeExample);
-            createCodeExample(codeExample);
+            createCodeExample(codeExample, codeExamples);
 
             // Add separator line
-            
+
             /*if(i < codeExamples - 1){
               var sexyLine = document.createElement("hr");
               sexyLine.classList.add("sexyLine");
@@ -303,7 +322,7 @@ export function activate(context: vscode.ExtensionContext) {
           });
         };
 
-        let createCodeExample = (codeExampleData) => {
+        let createCodeExample = (codeExampleData, codeExamples) => {
           let codeCon = document.getElementById("codeCon");
 
           var codeExampleCon = document.createElement("div");
@@ -312,9 +331,9 @@ export function activate(context: vscode.ExtensionContext) {
 
           var fullCodeBtn = document.createElement("button")
           fullCodeBtn.classList.add("fullCodeBtn");
-          fullCodeBtn.innerHTML = "Full Code";
+          fullCodeBtn.innerHTML = "Show Full Code >";
           fullCodeBtn.onclick = function(){
-            showFullCode(codeExampleData);
+            showFullCode(codeExampleData, codeExamples);
           };
           codeExampleCon.appendChild(fullCodeBtn);
 
