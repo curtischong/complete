@@ -16,15 +16,16 @@ export function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
+	let disposable = vscode.commands.registerCommand('extension.codeSearch', () => {
   // The code you place here will be executed every time your command is executed
 
   // Display a message box to the user
   //vscode.window.showInformationMessage('Hello Worlds!');
   // Create and show a new webview
+  const baseUrl = 'http://127.0.0.1:5000/';
   const panel = vscode.window.createWebviewPanel(
-    'catCoding', // Identifies the type of the webview. Used internally
-    'Cat Coding', // Title of the panel displayed to the user
+    'searchForCode', // Identifies the type of the webview. Used internally
+    'Search for Code',// Title of the panel displayed to the user
     vscode.ViewColumn.One, // Editor column to show the new webview panel in.
     {
       enableScripts: true,
@@ -58,14 +59,16 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   let sendCode = async (code: string) => {
-    const baseUrl = 'http://127.0.0.1:5000/';
+    // TODO: think about this getLastEditor thing. I think it's get active editor
+    const editor = getLastEditor();
     var options = {
       method: 'POST',
       uri: baseUrl,
       body: {
         code: code,
+        fullCode: editor.document.getText(),
         language: getLanguage(getLastEditor()),
-        results_num: 3
+        results_num: 3,
       },
       json: true // Automatically stringifies the body to JSON
     };
@@ -112,6 +115,20 @@ export function activate(context: vscode.ExtensionContext) {
       }
     },
   );
+  
+  let getCodeFromDocStrings = async (docString: string) => {
+    var options = {
+      method: 'POST',
+      uri: baseUrl,
+      body: {
+        docString: docString
+      },
+      json: true // Automatically stringifies the body to JSON
+    };
+
+    const result = await request.get(options);
+    console.log(result);
+  };
 
   vscode.workspace.onDidChangeTextDocument(function(TextDocumentChangeEvent) {
     const editor = vscode.window.activeTextEditor;
@@ -125,8 +142,6 @@ export function activate(context: vscode.ExtensionContext) {
     //let lineRange = new vscode.Selection(lineRange.start, lineRange.end);
 
     let curCode = editor.document.getText(lineRange);
-    console.log(curCode);
-    console.log(curCode.trimLeft());
     let startSection = curCode.trimLeft().substring(0, 2);
     let lastSection = curCode.trimLeft().substring(curCode.trimLeft().length - 2);
     if(startSection === "@S" && lastSection ==="@E"){
@@ -143,9 +158,24 @@ export function activate(context: vscode.ExtensionContext) {
         let deleteRange2 = new vscode.Range(deleteRange2Start, deleteRange2End);
         edit.delete(deleteRange2);
 
-        let newLine = editor.document.getText(lineRange);
-        edit.insert(new vscode.Position(lineRange.start.line+1, 0), "Your advertisement here\n");
-        //edit.insert(new vscode.Position(lineRange.start.line, curCode.length-2), "\n");
+        // we need to add a new line if the cursor is at the end of the file
+        if(editor.document.getText().split("\n").length - 1 === lineNum){
+          console.log("adding new line!");
+          edit.insert(new vscode.Position(lineRange.start.line, curCode.length-2), "\n");
+        }
+
+        //TODO: Move the cursor to the end of the replacement code
+        //let newLine = editor.document.getText(lineRange);
+        let replacementCode = "Your advertisement here";
+        replacementCode += "\n";
+        edit.insert(new vscode.Position(lineRange.start.line+1, 0), replacementCode);
+
+        let docStringLoc = editor.document.lineAt(lineNum).range;
+        //let lineRange = new vscode.Selection(lineRange.start, lineRange.end);
+        let docStringLine = editor.document.getText(docStringLoc);
+        let docString = docStringLine.trimLeft().substring(2, docStringLine.trimLeft().length-2);
+        console.log(docString);
+        getCodeFromDocStrings(docString);
       });
     }
 
