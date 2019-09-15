@@ -108,7 +108,7 @@ function activate(context) {
                     return;
             }
         });
-        let getCodeFromDocStrings = (docString) => __awaiter(this, void 0, void 0, function* () {
+        let getCodeFromDocStrings = (docString, position, editor) => __awaiter(this, void 0, void 0, function* () {
             var options = {
                 method: 'POST',
                 uri: baseUrl + "getCodeFromDocStrings",
@@ -118,7 +118,13 @@ function activate(context) {
                 json: true // Automatically stringifies the body to JSON
             };
             const result = yield request.get(options);
-            console.log(result);
+            editor.edit(edit => {
+                console.log(result);
+                let replacementCode = result[0];
+                replacementCode += "\n";
+                edit.insert(position, replacementCode);
+                //as any [string];
+            });
         });
         vscode.workspace.onDidChangeTextDocument(function (TextDocumentChangeEvent) {
             const editor = vscode.window.activeTextEditor;
@@ -156,12 +162,11 @@ function activate(context) {
                     let docStringLine = editor.document.getText(docStringLoc);
                     let docString = docStringLine.trimLeft().substring(2, docStringLine.trimLeft().length - 2);
                     console.log(docString);
-                    getCodeFromDocStrings(docString);
+                    getCodeFromDocStrings(docString, new vscode.Position(lineRange.start.line + 1, 0), editor);
                     //TODO: Move the cursor to the end of the replacement code
                     //let newLine = editor.document.getText(lineRange);
                     let replacementCode = "Your advertisement here";
                     replacementCode += "\n";
-                    edit.insert(new vscode.Position(lineRange.start.line + 1, 0), replacementCode);
                 });
             }
         });

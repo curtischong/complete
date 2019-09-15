@@ -117,7 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  let getCodeFromDocStrings = async (docString: string) => {
+  let getCodeFromDocStrings = async (docString: string, position: vscode.Position, editor: vscode.TextEditor) => {
     var options = {
       method: 'POST',
       uri: baseUrl + "getCodeFromDocStrings",
@@ -128,7 +128,13 @@ export function activate(context: vscode.ExtensionContext) {
     };
 
     const result = await request.get(options);
-    console.log(result);
+    editor.edit(edit => {
+      console.log(result);
+      let replacementCode = result[0];
+      replacementCode += "\n";
+      edit.insert(position, replacementCode);
+      //as any [string];
+    });
   };
 
   vscode.workspace.onDidChangeTextDocument(function(TextDocumentChangeEvent) {
@@ -172,13 +178,12 @@ export function activate(context: vscode.ExtensionContext) {
         let docStringLine = editor.document.getText(docStringLoc);
         let docString = docStringLine.trimLeft().substring(2, docStringLine.trimLeft().length-2);
         console.log(docString);
-        getCodeFromDocStrings(docString);
+        getCodeFromDocStrings(docString, new vscode.Position(lineRange.start.line+1, 0), editor);
 
         //TODO: Move the cursor to the end of the replacement code
         //let newLine = editor.document.getText(lineRange);
         let replacementCode = "Your advertisement here";
         replacementCode += "\n";
-        edit.insert(new vscode.Position(lineRange.start.line+1, 0), replacementCode);
       });
     }
 
