@@ -108,7 +108,24 @@ function activate(context) {
                     return;
             }
         });
-        let getCodeFromDocStrings = (lineNum, docString, position, editor) => __awaiter(this, void 0, void 0, function* () {
+        let docStringQueue = [];
+        //docStringQueue.push(2);         // queue is now [2]
+        //var i = docStringQueue.shift(); // queue is now [5]
+        let serverFree = true;
+        let workDownDocStringsQueue = () => __awaiter(this, void 0, void 0, function* () {
+            console.log(docStringQueue);
+            if (docStringQueue.length === 0 || !serverFree) {
+                return;
+            }
+            serverFree = false;
+            let curDocString = docStringQueue.shift();
+            if (curDocString === undefined) {
+                return;
+            }
+            let lineNum = curDocString.lineNum;
+            let docString = curDocString.docString;
+            let position = curDocString.position;
+            let editor = curDocString.editor;
             var options = {
                 method: 'POST',
                 uri: baseUrl + "getCodeFromDocStrings",
@@ -128,6 +145,17 @@ function activate(context) {
                 edit.insert(position, replacementCode);
                 //as any [string];
             });
+            serverFree = true;
+            workDownDocStringsQueue();
+        });
+        let getCodeFromDocStrings = (lineNum, docString, position, editor) => __awaiter(this, void 0, void 0, function* () {
+            docStringQueue.push({
+                lineNum: lineNum,
+                docString: docString,
+                position: position,
+                editor: editor
+            });
+            yield workDownDocStringsQueue();
         });
         vscode.workspace.onDidChangeTextDocument(function (TextDocumentChangeEvent) {
             const editor = vscode.window.activeTextEditor;
@@ -260,7 +288,7 @@ function activate(context) {
         border-bottom-right-radius: 20px;
       }
       .highlightedLine{
-        background-color: #b3b31b
+        background-color: #003d9e
       }
       .fullCodeBtn{
         color: white;
@@ -288,6 +316,7 @@ function activate(context) {
       }
       .hidden-code{
         color: #e35f00;
+        font-size: 20px;
       }
       .hljs{display:block;overflow-x:auto;padding:.5em;background:#282a36;border-radius:5px;}.hljs-built_in,.hljs-link,.hljs-section,.hljs-selector-tag{color:#8be9fd}.hljs-keyword{color:#ff79c6}.hljs,.hljs-subst{color:#f8f8f2}.hljs-title{color:#50fa7b}.hljs-addition,.hljs-attr,.hljs-bullet,.hljs-meta,.hljs-name,.hljs-string,.hljs-symbol,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable{color:#f1fa8c}.hljs-comment,.hljs-deletion,.hljs-quote{color:#6272a4}.hljs-doctag,.hljs-keyword,.hljs-literal,.hljs-name,.hljs-section,.hljs-selector-tag,.hljs-strong,.hljs-title,.hljs-type{font-weight:700}.hljs-literal,.hljs-number{color:#bd93f9}.hljs-emphasis{font-style:italic}
       </style>

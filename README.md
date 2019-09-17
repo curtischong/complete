@@ -1,65 +1,46 @@
-# code-prompt README
+# Complete
+Complete is a VSCode extension that introduces other people's ideas into your code. Written by [Curtis Chong](https://github.com/curtischong), [Akshay Saxena](https://github.com/akshay2000saxena), [Mayank Kanoria](https://github.com/mkanoria), and [Vikram Subramanian](https://github.com/vikramsubramanian).
 
-This is the README for your extension "code-prompt". After writing up a brief description, we recommend including the following sections.
 
-## Features
+###  Features:
+- Automatic Code Generation from pseudocode (Only Python)
+- Search for similar functions found on public repos (Only Python)
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### Why should you use this?
+- You can generate entire programs just by writing pseudocode - competitive programmers watch out!
+- You can search for similar functions by other developers - Improve your implimentation by copying code from others!
 
-For example if there is an image subfolder under your extension project workspace:
+### Installation:
+- Make sure you have [complete-server](https://github.com/curtischong/complete-server) running.
+- Open this reposity within VSCode then `hit F5`. This will launch another VSCode window that will has the extension loaded within it.
+- Now open the VSCode command palette ( by hitting `cmd + shift + p` at the same time)
+- Next type in the command `Code Search`. This will open up a new panel with the Complete search bar on it.
+  - Feel free to put VSCode in splitscreen and place the side panel to the side!
 
-\!\[feature X\]\(images/feature-x.png\)
+### Pseudocode -> function Usage
+- Go into a file you're working in and type a description of what you want your function to do. The longer it is the better.
+  - Ex: `Calculate the L2 Norm of 2 vectors.`
+- Now surround your Pseudocode with `@S` (start) and `@E` (end)
+  - Ex: `@SCalculate the L2 Norm of 2 vectors.@E` (spaces don't really matter)
+- The Complete extension will now send your pseudocode to a Neural Net trained by Github and will await a response.
+- Feel free to chain multiple pieces of Pseudocode together like you're scoping out the steps of your program. You don't need to wait until each function is generated before starting to write another. The requests are queued :)
+- Note: If the function generated is `undefined`, then no suitable function was close enough to match your description
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+### Similar function search Usage
+- Type into the search box a piece of code you're interested in looking in. Library functions are typically the most useful.
+- Highlight a section of code. We will search for other sections of code that are similar to your code.
 
-## Requirements
+### How does the pseudocode generator work?
+- I (Curtis) am not qualified to explain this. However, Github, the ones that trained the model, is: [github.blog/2018-09-18-towards-natural-lan: guage-semantic-code-search](https://github.blog/2018-09-18-towards-natural-language-semantic-code-search/)
+- Just understand that it uses the [Universal Sentence Encoder](https://arxiv.org/abs/1803.11175) to represent your pseudocode description as vector. You can read more about how an embedding represents a word [here](https://towardsdatascience.com/introduction-to-word-embedding-and-word2vec-652d0c2060fa). It then takes the vector representation of your pseduocode and will search for a function description that has a similar vector representation. This function description is mapped to the function it describes. So all it needs to do is to find the most similar function description vector that looks like your pseudocode vector, then return the corresponding function that function description points to.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### How the function search work?
+- We found an API ([searchcode.com](https://searchcode.com/)) that allows you to search for code within public repos on Github, Bitbucket, Google Code, SourceForge, Fedora Project, and Gitlab.
+- For every function you highlight, we first parse away syntactic nuances and pick out key terms, particularly function names (from packages) and other variables. Then we construct a list of terms to send to the API. This includes the names of the functions from the packages and a TF-IDF weighted score of your variable names.
+- After we get the search, we highlight the package names returned and send it off to the client!
 
-## Extension Settings
+##### Why is the code so bad?
+- We built this over Hack the North 2019...  ¯\\_(ツ)_/¯
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+##### When can I download it on the VSCode Extensions store?
+- I (Curtis) will fix it up and release it as a proper extension on the store if school takes a step back and cuts me some slack :)
