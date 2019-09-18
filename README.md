@@ -1,6 +1,10 @@
 # Complete
 Complete is a VSCode extension that introduces other people's ideas into your code. Written by [Curtis Chong](https://github.com/curtischong), [Akshay Saxena](https://github.com/akshay2000saxena), [Mayank Kanoria](https://github.com/mkanoria), and [Vikram Subramanian](https://github.com/vikramsubramanian).
 
+<p align="center">
+  <img src="https://chongcurtis.com/file_hosting/complete_func_gen.gif" alt="A photo of the proposed locations."/>
+  <img src="https://chongcurtis.com/file_hosting/complete_search.gif" alt="A photo of the proposed locations."/>
+</p>
 
 ###  Features:
 - Automatic Code Generation from pseudocode (Only Python)
@@ -31,8 +35,8 @@ Complete is a VSCode extension that introduces other people's ideas into your co
 - Highlight a section of code. We will search for other sections of code that are similar to your code.
 
 ### How does the pseudocode generator work?
-- I (Curtis) am not qualified to explain this. However, Github, the ones that trained the model, is: [github.blog/2018-09-18-towards-natural-lan: guage-semantic-code-search](https://github.blog/2018-09-18-towards-natural-language-semantic-code-search/)
-- Just understand that it uses the [Universal Sentence Encoder](https://arxiv.org/abs/1803.11175) to represent your pseudocode description as vector. You can read more about how an embedding represents a word [here](https://towardsdatascience.com/introduction-to-word-embedding-and-word2vec-652d0c2060fa). It then takes the vector representation of your pseduocode and will search for a function description that has a similar vector representation. This function description is mapped to the function it describes. So all it needs to do is to find the most similar function description vector that looks like your pseudocode vector, then return the corresponding function that function description points to.
+- None of us are qualified to explain this. However, Github, the ones that trained the model, is: [github.blog/2018-09-18-towards-natural-lan: guage-semantic-code-search](https://github.blog/2018-09-18-towards-natural-language-semantic-code-search/)
+- Just understand that it uses the [Universal Sentence Encoder](https://arxiv.org/abs/1803.11175) to represent your pseudocode description as vector. You can read more about how an embedding represents a word [here](https://towardsdatascience.com/introduction-to-word-embedding-and-word2vec-652d0c2060fa). It then takes the vector representation of your pseduocode and will search for a function description that has a similar vector representation. This function description is mapped to the function it describes. So all it needs to do is to find the most similar function description vector that looks like your pseudocode vector, then return the corresponding function of the function description.
 
 ### How the function search work?
 - We found an API ([searchcode.com](https://searchcode.com/)) that allows you to search for code within public repos on Github, Bitbucket, Google Code, SourceForge, Fedora Project, and Gitlab.
