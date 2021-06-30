@@ -2,8 +2,8 @@
 Complete is a VSCode extension that introduces other people's ideas into your code. Written by [Curtis Chong](https://github.com/curtischong), [Akshay Saxena](https://github.com/akshay2000saxena), [Mayank Kanoria](https://github.com/mkanoria), and [Vikram Subramanian](https://github.com/vikramsubramanian).
 
 <p align="center">
-  <img src="https://chongcurtis.com/file_hosting/complete_func_gen.gif" alt="A photo of the proposed locations."/>
-  <img src="https://chongcurtis.com/file_hosting/complete_search.gif" alt="A photo of the proposed locations."/>
+  <img src="https://curtischong.me/file_hosting/complete_func_gen.gif" alt="A gif of the function generation code"/>
+  <img src="https://curtischong.me/file_hosting/complete_search.gif" alt="A gif of the search code"/>
 </p>
 
 ###  Features:
